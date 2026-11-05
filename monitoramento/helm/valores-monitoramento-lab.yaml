@@ -1,0 +1,58 @@
+fullnameOverride: mon                                 # prefixo curto nos nomes dos objetos (mon-prometheus, mon-alertmanager...)
+prometheus:
+  prometheusSpec:
+    retention: 6h                                     # retenção curta: suficiente para o lab, economiza disco e memória
+    resources:
+      requests:
+        memory: 300Mi
+        cpu: 100m
+      limits:
+        memory: 700Mi                                 # acima disso o container é OOMKilled
+grafana:
+  fullnameOverride: mon-grafana
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+kube-state-metrics:
+  fullnameOverride: mon-kube-state-metrics
+prometheus-node-exporter:
+  fullnameOverride: mon-node-exporter
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m                             # alerta sem atualização por 5 min é considerado resolvido
+    route:
+      receiver: telegram                              # destino padrão
+      group_by: ['namespace']                         # agrupa alertas da mesma namespace numa única notificação
+      group_wait: 30s                                 # espera inicial para agrupar antes do primeiro envio
+      group_interval: 5m                              # intervalo mínimo entre notificações do mesmo grupo
+      repeat_interval: 12h                            # reenvio enquanto o alerta continuar ativo
+      routes:
+        - receiver: 'null'                            # Watchdog dispara sempre (teste de vida do pipeline); descartado no lab
+          matchers:
+            - alertname = "Watchdog"
+        - receiver: 'null'                            # alerta interno do chart, sem ação
+          matchers:
+            - alertname = "InfoInhibitor"
+    receivers:
+      - name: 'null'                                  # receiver sem destino: descarta
+      - name: telegram
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/telegram-bot-alertas/token  # token lido do Secret montado, nunca no values
+            chat_id: 000000000                        # placeholder: substituir pelo ID real do chat (número, sem aspas)
+            send_resolved: true                       # notifica também a resolução
+  alertmanagerSpec:
+    secrets:                                          # Secrets montados em /etc/alertmanager/secrets/<nome>/
+      - telegram-bot-alertas
+    resources:
+      requests:
+        memory: 64Mi
+kubeEtcd:                                             # componentes do Control Plane não expostos no minikube;
+  enabled: false                                      # se ligados, geram alvos DOWN
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

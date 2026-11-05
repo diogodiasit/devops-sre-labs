@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1     # CRD instalado pelo kube-prometheus-stack (Prometheus Operator)
+kind: PrometheusRule
+metadata:
+  name: alerta-cpu-alta
+  namespace: observabilidade             # onde o objeto fica; o escopo do alerta vem do expr
+  labels:
+    release: mon                         # obrigatório: o Prometheus só carrega regras com a label do release
+spec:
+  groups:
+    - name: laboratorio-cpu
+      rules:
+        - alert: PodComCPUAlta
+          expr: sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{container!=""}[1m])) > 0.5  # CPU por pod acima de 0,5 núcleo
+          for: 1m                        # condição precisa se manter por 1 min (estado Pending antes de Firing)
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} usando muita CPU"
+            description: "O pod {{ $labels.pod }} na namespace {{ $labels.namespace }} passou de meio núcleo por mais de 1 minuto."
