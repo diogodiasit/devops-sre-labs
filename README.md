@@ -11,6 +11,7 @@ Laboratórios práticos de infraestrutura, automação, CI/CD, containers, infra
 | [**CI/CD com GitHub Actions**](./cicd/projeto-agendamento/) | Testes em container a cada Pull Request, branch protection e publicação automática da imagem no Docker Hub após o merge |
 | [**Azure DevOps**](./azure-devops/) | Migração do mesmo pipeline para Azure Repos e Azure Pipelines, com Service Connection e Build Validation na `main` |
 | [**Kubernetes**](./kubernetes/) | Deploy, Ingress, ConfigMap/Secret, probes, HPA (2 → 6 Pods sob carga) e volumes persistentes, com manifestos declarativos |
+| [**Monitoramento**](./monitoramento/) | Prometheus, Grafana e Alertmanager via Helm, regra de alerta própria (`PrometheusRule`) e notificação de disparo e resolução no Telegram |
 | [**Terraform na Azure**](./terraform/) | IaC com `azurerm` (Resource Group, VNet, Storage Account) parametrizada e validada, mais o ciclo completo aplicado em lab local |
 | [**Troubleshooting de TLS**](./troubleshooting/tls-inspection/) | Diagnóstico de `x509: unknown authority` causado por inspeção TLS e correção no Docker e no containerd do Kubernetes |
 
@@ -19,7 +20,8 @@ Laboratórios práticos de infraestrutura, automação, CI/CD, containers, infra
 **SO e scripting:** Linux · Bash · Python  
 **Versionamento e CI/CD:** Git · GitHub Actions · Azure DevOps  
 **Containers e orquestração:** Docker · Docker Compose · Kubernetes · Nginx  
-**Cloud e IaC:** Azure · Terraform
+**Cloud e IaC:** Azure · Terraform  
+**Observabilidade:** Prometheus · Grafana · Alertmanager · Helm
 
 ## Estrutura do repositório
 
@@ -28,6 +30,7 @@ Laboratórios práticos de infraestrutura, automação, CI/CD, containers, infra
 | [`cicd/`](./cicd/) | Pipelines do GitHub Actions, apps Python com `pytest` e conceitos de CI/CD |
 | [`azure-devops/`](./azure-devops/) | Azure Repos, Pipelines, Service Connections, Branch Policies e equivalência com o GitHub Actions |
 | [`kubernetes/`](./kubernetes/) | Manifestos, comandos e conceitos (rede, configuração, probes, HPA, volumes, RBAC, AKS) |
+| [`monitoramento/`](./monitoramento/) | Values do Helm, `PrometheusRule`, comandos, PromQL e conceitos de observabilidade e alertas |
 | [`terraform/`](./terraform/) | Labs `lab-local` e `lab-azure`, comandos e fluxo de IaC em equipe |
 | [`docker/`](./docker/) | Dockerfile, Compose (Nginx + PostgreSQL), imagem no Docker Hub e troubleshooting de containers |
 | [`troubleshooting/`](./troubleshooting/) | Casos de incidentes reais com investigação, causa raiz e correção |
