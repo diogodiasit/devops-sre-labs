@@ -33,7 +33,7 @@ Observabilidade com Prometheus, Grafana e Alertmanager no Kubernetes, do lab loc
 ### ServiceMonitor
 
 - Diz ao Prometheus **o que** coletar: seleciona Services por label e define porta e caminho.
-- É a ficha de visita, não o alvo: `mon-apiserver` é só o nome do ServiceMonitor; o apiserver, o coredns e o kubelet já existiam no cluster.
+- O ServiceMonitor só descreve a coleta, ele não é o alvo. `mon-apiserver` é o nome do ServiceMonitor criado pelo chart; o apiserver, o coredns e o kubelet já existiam no cluster, e o chart apenas passou a coletá-los.
 - Componentes do Control Plane que o minikube não expõe (etcd, scheduler, controller-manager, kube-proxy) foram desligados no values para não gerar alvos `DOWN`.
 
 ---

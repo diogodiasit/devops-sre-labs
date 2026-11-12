@@ -6,9 +6,8 @@ Fundamentos de rede aplicados a troubleshooting de aplicações e infraestrutura
 
 ## DNS (Domain Name System)
 
-- Traduz nome (`google.com`) em endereço IP.
-- Analogia: a agenda do celular — você salva o nome, o celular busca o número.
-- Teste: `dig google.com`
+- Traduz nome (`google.com`) em endereço IP. Sem DNS, seria preciso saber o IP de cada serviço, e qualquer troca de IP quebraria os clientes.
+- Teste: `dig google.com` (a seção `ANSWER` traz o IP e o TTL).
 
 ### TTL (Time To Live)
 
@@ -20,12 +19,12 @@ Fundamentos de rede aplicados a troubleshooting de aplicações e infraestrutura
 ## Endereço IP
 
 - Número que identifica um host na rede (ex.: `142.250.218.14`).
-- Analogia: CEP + número da casa.
+- Parte do endereço identifica a rede e parte identifica o host; a máscara (ex.: `/24`) define onde fica a divisão. É isso que permite rotear o pacote até a rede certa.
 
 ## Portas
 
-- Um mesmo IP pode rodar vários serviços; a porta indica **para qual serviço** a conexão vai.
-- Analogia: IP = endereço do prédio, porta = número do apartamento.
+- Um mesmo IP pode rodar vários serviços; a porta indica **para qual serviço** a conexão vai. O IP leva até a máquina, e a porta leva até o processo que está escutando nela.
+- Para ver quem escuta em cada porta: `sudo ss -tlnp`.
 
 | Porta | Serviço |
 |---|---|
@@ -35,8 +34,8 @@ Fundamentos de rede aplicados a troubleshooting de aplicações e infraestrutura
 
 ## HTTP e HTTPS
 
-- **HTTP:** protocolo de conversa entre cliente e servidor, sem proteção (como um cartão-postal).
-- **HTTPS:** o mesmo protocolo sobre TLS, criptografado (como uma carta lacrada).
+- **HTTP:** protocolo de requisição e resposta entre cliente e servidor. Trafega em texto puro: qualquer equipamento no caminho consegue ler e alterar o conteúdo.
+- **HTTPS:** o mesmo HTTP dentro de uma conexão TLS. O conteúdo vai criptografado, e o certificado prova que o servidor é quem diz ser.
 
 Handshake TLS, de forma simplificada:
 
@@ -77,7 +76,7 @@ Veja um caso real de falha de TLS em [troubleshooting/tls-inspection](../trouble
 
 - **Chave privada:** fica só na máquina do usuário; nunca é compartilhada.
 - **Chave pública:** pode ser distribuída livremente; vai para o servidor.
-- Analogia: a chave pública é um cadeado que qualquer um pode fechar; a chave privada é a única que o abre.
+- O que é cifrado ou verificado com a chave pública só pode ser respondido por quem tem a chave privada correspondente. Por isso a pública pode ser distribuída sem risco.
 - A chave privada **nunca trafega pela rede**: o servidor envia um desafio matemático, só quem tem a chave privada correta consegue resolver, e apenas a **resposta** volta.
 
 ### Como a chave pública chega ao servidor
