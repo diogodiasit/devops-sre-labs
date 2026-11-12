@@ -1,57 +1,42 @@
-# ============================================================
-# PARTE 1: OS CAIXAS (Deployment)
-# ============================================================
+# Aplicação usada no teste de HPA. A imagem hpa-example faz um cálculo pesado a cada
+# requisição, então a CPU sobe rápido sob carga.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-catalogo
 spec:
-  # ATENÇÃO: sem o campo "replicas" de propósito.
-  # Quem decide quantos caixas (pods) existem agora é o gerente (HPA).
-  # Se "replicas" ficar aqui, todo "kubectl apply" (ou pipeline de CI/CD)
-  # volta o número para o valor fixo e briga com o HPA.
+  # Sem "replicas": quem controla a quantidade é o HPA. Com o campo aqui, cada
+  # kubectl apply (ou pipeline) devolveria o valor fixo e entraria em conflito com ele.
   selector:
     matchLabels:
-      app: api-catalogo              # o Deployment cuida dos pods com esta etiqueta
+      app: api-catalogo
   template:
     metadata:
       labels:
-        app: api-catalogo            # etiqueta colocada em cada caixa (pod) criado
+        app: api-catalogo
     spec:
       containers:
         - name: catalogo
-          # Imagem oficial de exemplo do Kubernetes: cada acesso faz uma conta
-          # pesada, ou seja, gasta CPU de propósito (ótimo para ver o HPA agir)
           image: registry.k8s.io/hpa-example
           ports:
-            - containerPort: 80      # porta onde a aplicação escuta dentro do container
+            - containerPort: 80
           resources:
-            # RESERVA (requests): a força garantida de cada caixa (pod).
-            # - O arrumador (Scheduler) usa para decidir em qual sala (node) o pod cabe.
-            # - O gerente (HPA) usa como base para calcular a porcentagem de esforço.
-            # SEM requests de CPU, o HPA mostra <unknown> e não funciona.
+            # O scheduler usa os requests para escolher o node, e o HPA calcula
+            # a utilização como % deles. Sem requests de CPU o HPA fica <unknown>.
             requests:
-              cpu: 200m              # 200 milicores = 1/5 de um núcleo de CPU
-              memory: 128Mi          # 128 megabytes de memória garantidos
-            # TETO (limits): o máximo que o caixa pode usar, emprestando o que
-            # estiver ocioso na sala (node).
+              cpu: 200m
+              memory: 128Mi
             limits:
-              cpu: 500m              # passou disso, o pod é freado (throttling), fica lento
-              memory: 128Mi          # igual ao requests: prática de produção para memória,
-                                     # evita o pod viver de memória emprestada e ser o
-                                     # primeiro a morrer (OOMKilled) se a sala apertar
+              cpu: 500m          # acima disso o container sofre throttling
+              memory: 128Mi      # igual ao request: evita depender de memória ociosa do node e ser OOMKilled
 ---
-# ============================================================
-# PARTE 2: O ORGANIZADOR DA FILA (Service)
-# ============================================================
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-catalogo                 # nome que os clientes (requisições) usam para chegar
+  name: svc-catalogo
 spec:
   selector:
-    app: api-catalogo                # aponta para os caixas (pods) com esta etiqueta,
-                                     # inclusive os novos que o HPA criar
+    app: api-catalogo            # inclui automaticamente os Pods novos criados pelo HPA
   ports:
-    - port: 80                       # porta do Service
-      targetPort: 80                 # porta do container
+    - port: 80
+      targetPort: 80

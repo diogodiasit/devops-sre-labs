@@ -1,23 +1,25 @@
-apiVersion: networking.k8s.io/v1   # versão da API de rede, onde o Ingress mora
-kind: Ingress                      # tipo do objeto: o "papel" com as regras
+# Roteamento por caminho: /app1 e /app2 vão para Services diferentes.
+# Sem "host", a regra vale para qualquer endereço, o que facilita o teste local.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: ingress-teste              # nome do Ingress
+  name: ingress-teste
 spec:
-  ingressClassName: nginx          # qual porteiro (controller) lê essas regras
+  ingressClassName: nginx        # controller que aplica estas regras (ingress-nginx do minikube)
   rules:
-  - http:                          # sem "host": vale para qualquer endereço (bom para teste)
+  - http:
       paths:
-      - path: /app1                # caminho na URL
-        pathType: Prefix           # vale para /app1 e tudo que começa com /app1/
+      - path: /app1
+        pathType: Prefix         # casa /app1 e tudo abaixo dele (/app1/...)
         backend:
           service:
-            name: svc-app1         # Service de destino (nome exato)
+            name: svc-app1
             port:
-              number: 80           # porta do Service
-      - path: /app2                # segundo caminho
+              number: 80
+      - path: /app2
         pathType: Prefix
         backend:
           service:
-            name: svc-app2         # Service de destino (nome exato)
+            name: svc-app2
             port:
               number: 80

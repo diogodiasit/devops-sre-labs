@@ -1,23 +1,25 @@
-apiVersion: apps/v1                 # versão da API do Deployment
-kind: Deployment                    # tipo: mantém os Pods vivos
+# Recebe o ConfigMap config-app e o Secret segredo-app como variáveis de ambiente.
+# Conferir com: kubectl exec deploy/vitrine -- env | grep DB_
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: vitrine                     # nome do Deployment
+  name: vitrine
 spec:
-  replicas: 1                       # 1 Pod basta para o teste
+  replicas: 1
   selector:
     matchLabels:
-      app: vitrine                  # o Deployment cuida dos Pods com essa etiqueta
+      app: vitrine
   template:
     metadata:
       labels:
-        app: vitrine                # etiqueta que cada Pod recebe
+        app: vitrine
     spec:
       containers:
-      - name: vitrine               # nome do container dentro do Pod
-        image: busybox:1.36         # imagem mínima, só para o teste
-        command: ["sleep", "3600"]  # fica parado por 1 hora, sem fazer nada
-        envFrom:                    # "entregue variáveis de ambiente vindas de..."
-        - configMapRef:             # ...um ConfigMap
-            name: config-app        # ConfigMap criado em config-teste.yaml
-        - secretRef:                # ...e também um Secret
-            name: segredo-app       # Secret criado em config-teste.yaml
+      - name: vitrine
+        image: busybox:1.36
+        command: ["sleep", "3600"]
+        envFrom:                   # cada chave vira uma variável; mudanças só valem após recriar o Pod
+        - configMapRef:
+            name: config-app
+        - secretRef:
+            name: segredo-app

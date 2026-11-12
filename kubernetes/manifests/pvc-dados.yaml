@@ -1,0 +1,13 @@
+# PVC com provisionamento dinâmico: a StorageClass "standard" do minikube cria o PV
+# automaticamente. Os Pods referenciam o PVC pelo nome, nunca o PV.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-dados
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce        # montado por um node por vez (mesmo modo do Azure Disk)
+  resources:
+    requests:
+      storage: 1Gi

@@ -47,7 +47,7 @@ O *subject* dizia ser do Docker, mas o *issuer* era o Cloudflare Gateway. **A di
 
 A rede tinha um **Cloudflare Gateway fazendo inspeção TLS**: ele intercepta a conexão, fala com o destino real em nome do cliente e devolve a resposta com um certificado **gerado na hora**, assinado pela CA do próprio gateway. Como essa CA não estava na lista de confiança do Linux (nem do node do minikube), a conexão era recusada.
 
-> **Analogia do crachá:** o certificado é um crachá com duas informações — "eu sou..." (*subject*) e "quem garante sou eu" (*issuer*). Na interceptação, um terceiro entrega um crachá novo dizendo "falo em nome do Docker". Como esse terceiro nunca foi apresentado ao sistema, o crachá é recusado. A correção é apresentá-lo formalmente: registrar a CA dele como confiável.
+Em resumo: o *subject* diz para qual host o certificado foi emitido, e o *issuer* diz qual CA o assinou. O cliente só aceita a conexão se o issuer estiver na sua lista de CAs confiáveis. Na interceptação, o subject continua sendo o do Docker, mas o issuer passa a ser a CA do gateway, que o sistema não conhecia. A correção é adicionar essa CA à lista de confiança.
 
 Ponto-chave: o certificado **não** é um arquivo pronto para baixar de um site oficial. Ele é **capturado ao vivo** da própria conexão interceptada e então adicionado à lista de confiança local.
 
@@ -95,10 +95,10 @@ kubectl delete pod <nome-do-pod-com-erro>    # o controlador recria o Pod, que a
 
 - `openssl x509 -outform PEM`: converte o certificado do servidor para o formato PEM.
 
-Automatizado em [`conserta-cert.sh`](./conserta-cert.sh), que captura, instala e reinicia o containerd em um único comando:
+Automatizado em [`instala-ca-minikube.sh`](./instala-ca-minikube.sh), que captura, instala e reinicia o containerd em um único comando:
 
 ```bash
-./troubleshooting/tls-inspection/conserta-cert.sh
+./troubleshooting/tls-inspection/instala-ca-minikube.sh
 ```
 
 Verificação:

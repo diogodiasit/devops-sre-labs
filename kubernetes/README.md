@@ -21,10 +21,10 @@ Cada lab tem manifesto próprio em [`manifests/`](./manifests/):
 | Deploy e Service | [`webserver.yaml`](./manifests/webserver.yaml) | Deployment com 3 réplicas + Service ClusterIP; DNS interno; rolling update e rollback |
 | Ingress | [`apps-teste.yaml`](./manifests/apps-teste.yaml), [`ingress-teste.yaml`](./manifests/ingress-teste.yaml) | Roteamento por caminho (`/app1`, `/app2`) com ingress-nginx para dois Services |
 | ConfigMap e Secret | [`config-teste.yaml`](./manifests/config-teste.yaml), [`vitrine.yaml`](./manifests/vitrine.yaml), [`vitrine-arq.yaml`](./manifests/vitrine-arq.yaml) | Configuração entregue como variáveis (`envFrom`) e como arquivos montados em volume |
-| Readiness probe | [`garcom.yaml`](./manifests/garcom.yaml) | Pod sai e volta do balanceamento sem reiniciar |
-| Liveness probe | [`cozinheiro.yaml`](./manifests/cozinheiro.yaml) | Aplicação "trava" após 20 s e o kubelet reinicia o container |
+| Readiness probe | [`readiness-probe.yaml`](./manifests/readiness-probe.yaml) | Verifica se o Pod está pronto para receber tráfego. Quando a probe falha, o Service para de enviar requisições ao Pod (READY `0/1`), mas o container continua rodando, sem reinício |
+| Liveness probe | [`liveness-probe.yaml`](./manifests/liveness-probe.yaml) | Verifica se a aplicação continua respondendo. A aplicação simula uma trava após 20 s, a probe falha e o kubelet reinicia o container (RESTARTS sobe) |
 | HPA | [`api-catalogo-deploy.yaml`](./manifests/api-catalogo-deploy.yaml), [`escalador-catalogo-hpa.yaml`](./manifests/escalador-catalogo-hpa.yaml) | Autoscaling por CPU (meta de 50% do `requests`, 2 a 8 réplicas, janela de estabilização de 5 min) |
-| Volumes persistentes | [`pedido-disco-dados.yaml`](./manifests/pedido-disco-dados.yaml), [`gravador-de-notas.yaml`](./manifests/gravador-de-notas.yaml), [`leitor-de-notas.yaml`](./manifests/leitor-de-notas.yaml) | PVC com provisionamento dinâmico; dado sobrevive à remoção do Pod |
+| Volumes persistentes | [`pvc-dados.yaml`](./manifests/pvc-dados.yaml), [`gravador-de-notas.yaml`](./manifests/gravador-de-notas.yaml), [`leitor-de-notas.yaml`](./manifests/leitor-de-notas.yaml) | PVC com provisionamento dinâmico; dado sobrevive à remoção do Pod |
 
 Estudo de arquitetura (conceitual, sem cluster provisionado): **Namespaces e RBAC** e **AKS** (responsabilidade compartilhada, atualizações, alternativas e custo) — ver [conceitos.md](./conceitos.md#namespaces-e-rbac).
 
@@ -54,7 +54,7 @@ kubectl get hpa escalador-catalogo --watch         # em outro terminal: acompanh
 Exemplo — persistência de dados:
 
 ```bash
-kubectl apply -f kubernetes/manifests/pedido-disco-dados.yaml   # PVC; o PV é criado automaticamente
+kubectl apply -f kubernetes/manifests/pvc-dados.yaml            # PVC; o PV é criado automaticamente
 kubectl apply -f kubernetes/manifests/gravador-de-notas.yaml    # Pod grava /dados/nota.txt
 kubectl delete pod gravador-de-notas                             # Pod removido; PVC e PV continuam
 kubectl apply -f kubernetes/manifests/leitor-de-notas.yaml      # Pod novo monta o mesmo PVC
@@ -67,7 +67,7 @@ Referência completa: [comandos.md](./comandos.md).
 
 - **HPA:** sob carga, o Deployment escalou de **2 → 6 Pods** e voltou para 2 após a janela de estabilização de 5 minutos. O caso de `requests` ausente (HPA em `<unknown>`) foi reproduzido e diagnosticado com `kubectl describe hpa`.
 - **Volumes:** PVC de 1 Gi ficou `Bound`; a nota gravada por um Pod foi lida por outro Pod criado depois da remoção do primeiro; a limpeza com `reclaimPolicy: Delete` removeu o disco.
-- **Probes:** a readiness alternou o Pod entre `0/1` e `1/1` sem reinício; a liveness gerou `Liveness probe failed` nos Events e reiniciou o container.
+- **Probes:** criando e apagando `/tmp/pronto`, o Pod da readiness alternou entre READY `1/1` e `0/1` com RESTARTS em 0, ou seja, saiu e voltou do Service sem reiniciar. Na liveness, os Events mostraram `Liveness probe failed` e o RESTARTS subiu a cada trava simulada.
 - **Ingress:** `/app1` e `/app2` roteados para Services distintos via `minikube tunnel`.
 - **Rolling update e rollback** executados sem downtime.
 - **Troubleshooting:** falha de pull de imagem (`x509: certificate signed by unknown authority`) causada por inspeção TLS, resolvida dentro do node do minikube — ver [troubleshooting/tls-inspection](../troubleshooting/tls-inspection/).
