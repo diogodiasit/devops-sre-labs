@@ -4,8 +4,7 @@
 # (usuários, credenciais, horário permitido e controladora)
 # =========================================================
 
-# "Bancos de dados" falsos, só em memória (somem ao fechar o programa).
-# Servem pra guardar os usuários e credenciais cadastrados durante o teste.
+# Armazenamento em memória no lugar de um banco de dados, suficiente para os testes.
 usuarios = {}
 credenciais = {}
 
@@ -35,9 +34,8 @@ def verificar_horario(hora_tentativa, hora_inicio, hora_fim):
 
 
 class MockControladora:
-    # Isto é a "controladora falsa" — substitui o hardware físico nos testes.
-    # Em vez de acionar uma catraca de verdade, ela só devolve a resposta
-    # definida na criação do teste (liberado ou negado).
+    # Mock da controladora de acesso: substitui o hardware (catraca) nos testes
+    # e devolve a resposta configurada no teste ("liberado" ou "negado").
 
     def __init__(self, resposta="liberado"):
         # Executado ao criar uma nova controladora falsa
