@@ -43,7 +43,7 @@ docker run -d --restart unless-stopped -p 8080:80 nginx
 1. Diagnosticar dentro do container em execução (`docker exec`, `docker stats`, `docker logs`).
 2. Identificar **onde** está a causa:
    - código da aplicação → encaminhar ao time de desenvolvimento e gerar imagem nova;
-   - Dockerfile (dependência, variável, permissão) → corrigir a receita;
+   - Dockerfile (dependência, variável, permissão) → corrigir o Dockerfile;
    - configuração de execução (`docker run`/compose: limite de recurso, porta, variável de ambiente) → ajustar o compose ou o comando.
 3. Se necessário, aplicar correção temporária no container para estancar o incidente, sabendo que ela **não** é permanente.
 4. Corrigir na origem e gerar imagem nova (`docker build`).

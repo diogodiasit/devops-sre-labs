@@ -1,33 +1,18 @@
+# Primeira etapa do teste de persistência: grava um arquivo no volume do PVC.
+# Depois este Pod é removido, e o leitor-de-notas confere se o arquivo continua lá.
 apiVersion: v1
-
-# Tipo do objeto: um pod simples
 kind: Pod
-
 metadata:
-  # Nome do pod
   name: gravador-de-notas
-
 spec:
-  # PRIMEIRO: de onde vem o disco...
   volumes:
-    # Apelido do disco SÓ dentro deste pod. Serve para ligar com o volumeMounts abaixo.
-    - name: disco-do-pod
+    - name: dados
       persistentVolumeClaim:
-        # Ponto central: o pod aponta para o PEDIDO (PVC) pelo nome.
-        # Não aponta para o PV nem para o provedor de nuvem.
-        claimName: pedido-disco-dados
-
+        claimName: pvc-dados
   containers:
     - name: escritor
-      # Imagem pequena, só para ter um terminal e comandos básicos
       image: busybox:1.36
-
-      # Escreve uma frase no arquivo e depois fica "dormindo" para o pod não terminar
       command: ["sh", "-c", "echo 'Esta nota deve sobreviver ao pod' > /dados/nota.txt && sleep 3600"]
-
-      # ...DEPOIS: em qual pasta do container o disco aparece
       volumeMounts:
-        # Mesmo apelido declarado acima em volumes
-        - name: disco-do-pod
-          # Pasta dentro do container onde o disco aparece
+        - name: dados          # liga ao volume declarado acima pelo nome
           mountPath: /dados

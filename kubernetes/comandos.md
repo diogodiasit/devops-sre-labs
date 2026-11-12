@@ -147,16 +147,25 @@ kubectl set env deployment/vitrine-cmd --from=configmap/config-app   # liga o Co
 
 ## Probes
 
+**Readiness:** o Pod só entra no Service quando `/tmp/pronto` existe.
+
 | Comando | O que faz |
 |---|---|
-| `kubectl apply -f manifests/garcom.yaml` | Pod com readiness probe (`cat /tmp/pronto`) |
-| `kubectl exec deploy/garcom -- touch /tmp/pronto` | Cria o arquivo: o Pod passa de `0/1` para `1/1` |
-| `kubectl exec deploy/garcom -- rm /tmp/pronto` | Remove o arquivo: o Pod volta para `0/1`, **sem** reiniciar |
-| `kubectl exec deploy/garcom -- cat /tmp/pronto; echo $?` | `$?` = código de saída do último comando (0 = sucesso) |
-| `kubectl apply -f manifests/cozinheiro.yaml` | Pod com liveness probe; a aplicação "trava" após 20 s |
-| `kubectl describe pod -l app=cozinheiro` | Events mostram `Liveness probe failed` e o reinício |
-| `kubectl scale deployment cozinheiro --replicas=0` | Pausa o teste sem apagar o Deployment |
-| `kubectl get pod -l app=garcom -o jsonpath='{.items[0].spec.containers[*].name}'; echo` | Nomes dos containers do Pod |
+| `kubectl apply -f manifests/readiness-probe.yaml` | Cria o Deployment `demo-readiness`; o Pod nasce `0/1` porque o arquivo ainda não existe |
+| `kubectl exec deploy/demo-readiness -- touch /tmp/pronto` | Cria o arquivo: a probe passa e o Pod vai para `1/1` (entra no Service) |
+| `kubectl exec deploy/demo-readiness -- rm /tmp/pronto` | Remove o arquivo: o Pod volta para `0/1` e sai do Service, mas RESTARTS continua em 0 |
+| `kubectl exec deploy/demo-readiness -- cat /tmp/pronto; echo $?` | Roda o mesmo teste da probe na mão; `$?` mostra o código de saída (0 = sucesso) |
+| `kubectl get pods -l app=demo-readiness -w` | Acompanha a coluna READY mudando |
+
+**Liveness:** a aplicação simula uma trava após 20 s e o kubelet reinicia o container.
+
+| Comando | O que faz |
+|---|---|
+| `kubectl apply -f manifests/liveness-probe.yaml` | Cria o Deployment `demo-liveness` |
+| `kubectl get pods -l app=demo-liveness -w` | RESTARTS sobe a cada ciclo de trava e reinício |
+| `kubectl describe pod -l app=demo-liveness` | Events mostram `Liveness probe failed` e `Container ... will be restarted` |
+| `kubectl scale deployment demo-liveness --replicas=0` | Pausa o teste sem apagar o Deployment |
+| `kubectl get pod -l app=demo-readiness -o jsonpath='{.items[0].spec.containers[*].name}'; echo` | Lista os nomes dos containers do Pod |
 
 ## HPA (Horizontal Pod Autoscaler)
 
@@ -187,7 +196,7 @@ kubectl run gerador-carga --rm -it --image=busybox:1.36 --restart=Never -- /bin/
 | Comando | O que faz |
 |---|---|
 | `kubectl get storageclass` | Tipos de disco que o cluster sabe provisionar |
-| `kubectl apply -f manifests/pedido-disco-dados.yaml` | Cria o PVC; o PV é criado automaticamente |
+| `kubectl apply -f manifests/pvc-dados.yaml` | Cria o PVC `pvc-dados`; o PV é criado automaticamente |
 | `kubectl get pvc` | Lista os PVCs; `STATUS Bound` = ligado a um disco |
 | `kubectl get pv` | Lista os discos (PV) criados pelo cluster |
 | `kubectl describe pv <nome-do-pv>` | Claim (dono), Reclaim Policy, Source |
@@ -234,7 +243,7 @@ kubectl delete pod <nome-do-pod-com-erro>
 | `minikube ssh -- ls -l /usr/local/share/ca-certificates/` | Verifica se o certificado está instalado |
 | `minikube ssh -- "openssl x509 -in /usr/local/share/ca-certificates/cloudflare.crt -noout -subject -issuer -dates"` | Mostra subject, issuer e validade do certificado |
 | `minikube ssh -- sudo crictl pull busybox:1.36` | Testa o download de imagem direto no containerd |
-| `../troubleshooting/tls-inspection/conserta-cert.sh` | Automatiza captura, instalação e restart do containerd |
+| `../troubleshooting/tls-inspection/instala-ca-minikube.sh` | Automatiza captura, instalação e restart do containerd |
 
 > O certificado se perde quando o container do minikube é recriado (`minikube delete`) e precisa ser reinstalado.
 

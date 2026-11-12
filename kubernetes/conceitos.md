@@ -38,7 +38,7 @@ kubectl → kube-apiserver → etcd (grava o estado desejado)
 
 ### Pod x container x Deployment
 
-- O Pod é a casa, o container é o morador. Quase sempre 1 container por Pod.
+- O Pod envolve um ou mais containers que compartilham IP e volumes. Na prática, quase sempre é 1 container por Pod; o segundo container, quando existe, costuma ser um sidecar (ex.: os sidecars do Grafana no lab de monitoramento).
 - O Pod é descartável: o Kubernetes não o conserta, substitui por outro.
 - **O que reinicia o container:** erro na aplicação, OOMKilled (falta de memória), falha de liveness.
 - **O que substitui o Pod:** delete, queda do node, eviction, rolling update, redução de escala.
@@ -151,7 +151,7 @@ kubectl → kube-apiserver → etcd (grava o estado desejado)
 
 | | Variável de ambiente | Arquivo (volume) |
 |---|---|---|
-| Atualização | O Pod recebe uma **cópia** ao nascer; mudança exige `rollout restart` | Atualiza sozinho em ~1 minuto (a aplicação precisa reler); com `subPath` não atualiza |
+| Atualização | O Pod recebe uma **cópia** quando é criado; mudança exige `rollout restart` | Atualiza sozinho em ~1 minuto (a aplicação precisa reler); com `subPath` não atualiza |
 | Uso recomendado | Configuração simples | Certificados e segredos sensíveis (menos exposição em logs) |
 
 - Um volume tem duas partes: `volumes` (**de onde** vem) e `volumeMounts` (**onde** aparece no container), ligadas pelo campo `name`.
@@ -175,16 +175,16 @@ Testes de saúde executados pelo **kubelet**.
 
 ## HPA (Horizontal Pod Autoscaler)
 
-Analogia do supermercado:
+Quem participa quando a carga sobe:
 
-| Papel | Componente |
+| Componente | Papel |
 |---|---|
-| Gerente: decide quantos caixas abertos | HPA |
-| Prancheta: mede o esforço real de cada caixa | metrics-server |
-| Organizador da fila: distribui clientes entre caixas prontos | Service |
-| Arrumador: decide em que sala cada caixa fica, olhando a reserva | Scheduler |
-| Construtor: cria/remove salas quando há caixas sem lugar (`Pending`) | Cluster Autoscaler (no AKS, opção do node pool) |
-| Fantasmas: guardam vaga e são expulsos no pico, acionando o construtor mais cedo | Pods placeholder (overprovisioning) |
+| **HPA** | Compara o uso de CPU com a meta e decide quantas réplicas o Deployment deve ter |
+| **metrics-server** | Coleta o uso atual de CPU e memória de cada Pod no kubelet; é a fonte de dados do HPA |
+| **Service** | Distribui as requisições entre os Pods prontos, inclusive os recém-criados |
+| **Scheduler** | Escolhe o node de cada Pod novo com base nos `requests` e no espaço livre |
+| **Cluster Autoscaler** | Adiciona nodes quando há Pods em `Pending` por falta de espaço, e remove nodes ociosos (no AKS, é uma opção do node pool) |
+| **Pods placeholder** (overprovisioning) | Pods de baixa prioridade que reservam espaço; no pico são despejados e liberam vaga na hora, enquanto o Cluster Autoscaler sobe um node novo |
 
 ### Recursos de cada Pod
 
@@ -341,7 +341,7 @@ Fluxo: escrever o PVC → o CSI pede o disco à nuvem → a nuvem cria o disco �
 
 ## Boas práticas de YAML
 
-- `name` = identidade única (como um CPF) · `labels` = etiqueta de grupo (como uma camiseta) · `selector` = busca pela etiqueta.
+- `name` identifica um objeto (único por tipo dentro do namespace); `labels` agrupam vários objetos; `selector` é o filtro que encontra objetos pelas labels.
 - O filtro `-l` só encontra objetos que **têm** a label no próprio `metadata` (o selector não conta).
 - Chaves fixas do Kubernetes (`name`, `labels`, `image`...) x chaves livres (valores dentro de `labels`/`selector`).
 - Itens irmãos na mesma coluna · só espaços, nunca Tab · hífen = item de lista.

@@ -1,0 +1,28 @@
+# Liveness probe: simula uma aplicação que trava.
+# O container cria /tmp/vivo, apaga o arquivo após 20 s e continua rodando, como um
+# processo que não morreu mas parou de responder. A probe passa a falhar e o kubelet
+# reinicia o container: RESTARTS sobe e o ciclo se repete.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-liveness
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-liveness
+  template:
+    metadata:
+      labels:
+        app: demo-liveness
+    spec:
+      containers:
+      - name: app
+        image: busybox:1.36
+        command: ["sh", "-c", "touch /tmp/vivo; sleep 20; rm /tmp/vivo; sleep 3600"]
+        livenessProbe:
+          exec:
+            command: ["cat", "/tmp/vivo"]
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 2        # 2 falhas seguidas (~10 s) para reiniciar

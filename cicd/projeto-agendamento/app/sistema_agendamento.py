@@ -1,7 +1,7 @@
 # =========================================================
 # sistema_agendamento.py
-# Simulação de agendamento de barbearia, usando blocos fixos
-# de 30 minutos (modelo de "gavetas")
+# Agendamento de barbearia com a agenda dividida em blocos fixos
+# de 30 minutos
 # =========================================================
 
 # Cada barbeiro tem uma lista dos horários (blocos de 30min) já ocupados.
@@ -10,8 +10,8 @@ agenda_ocupada = {}
 
 DURACAO_SERVICOS = {
     "corte": 30,
-    "barba": 30,          # arredondado pra cima, pra caber numa gaveta
-    "corte+barba": 60,    # arredondado pra cima (45min reais viram 2 gavetas)
+    "barba": 30,          # duração real menor, arredondada para 1 bloco
+    "corte+barba": 60,    # 45 min reais, arredondados para 2 blocos
 }
 
 EXPEDIENTE_INICIO = "09:00"
@@ -21,8 +21,7 @@ ALMOCO_FIM = "13:00"
 
 
 def gerar_blocos(horario_inicio, duracao_minutos):
-    # Transforma um horário de início + uma duração numa LISTA de
-    # gavetas de 30 minutos que esse serviço vai ocupar.
+    # Converte início + duração na lista de blocos de 30 min que o serviço ocupa.
     # Ex: ("09:00", 60) -> ["09:00", "09:30"]
     h, m = map(int, horario_inicio.split(":"))
     total_minutos_inicio = h * 60 + m
@@ -38,12 +37,12 @@ def gerar_blocos(horario_inicio, duracao_minutos):
 
 
 def todos_dentro_do_expediente(blocos):
-    # Confere se TODAS as gavetas do serviço caem dentro do expediente
+    # Todos os blocos precisam estar dentro do expediente
     return all(EXPEDIENTE_INICIO <= b < EXPEDIENTE_FIM for b in blocos)
 
 
 def algum_bloco_no_almoco(blocos):
-    # Confere se ALGUMA gaveta do serviço cai dentro do almoço
+    # Basta um bloco no almoço para recusar
     return any(ALMOCO_INICIO <= b < ALMOCO_FIM for b in blocos)
 
 
@@ -52,23 +51,23 @@ def agendar(barbeiro, servico, horario_inicio):
     if servico not in DURACAO_SERVICOS:
         return {"status": "recusado", "motivo": "servico_invalido"}
 
-    # 2) Descobre quantas gavetas esse serviço precisa, a partir do início
+    # 2) Blocos que o serviço ocupa a partir do horário pedido
     duracao = DURACAO_SERVICOS[servico]
     blocos_necessarios = gerar_blocos(horario_inicio, duracao)
 
-    # 3) Todas as gavetas cabem dentro do expediente?
+    # 3) Cabe no expediente?
     if not todos_dentro_do_expediente(blocos_necessarios):
         return {"status": "recusado", "motivo": "fora_do_expediente"}
 
-    # 4) Alguma gaveta cai no almoço?
+    # 4) Cai no almoço?
     if algum_bloco_no_almoco(blocos_necessarios):
         return {"status": "recusado", "motivo": "horario_de_almoco"}
 
-    # 5) Alguma das gavetas necessárias já está ocupada por esse barbeiro?
+    # 5) Algum bloco já está ocupado na agenda desse barbeiro?
     ocupados_do_barbeiro = agenda_ocupada.get(barbeiro, [])
     if any(bloco in ocupados_do_barbeiro for bloco in blocos_necessarios):
         return {"status": "recusado", "motivo": "conflito_de_horario"}
 
-    # 6) Passou em tudo: ocupa todas as gavetas necessárias
+    # 6) Passou em todas as regras: reserva os blocos
     agenda_ocupada.setdefault(barbeiro, []).extend(blocos_necessarios)
     return {"status": "confirmado", "motivo": None, "blocos_ocupados": blocos_necessarios}

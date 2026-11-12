@@ -8,8 +8,8 @@ from sistema_agendamento import agendar, agenda_ocupada
 
 
 # ---------------------------------------------------------
-# Limpa a agenda antes de cada teste, pra um não interferir
-# no outro (mesma ideia da fixture do controle de acesso)
+# Limpa a agenda antes de cada teste, para que um teste não
+# dependa do estado deixado pelo anterior
 # ---------------------------------------------------------
 @pytest.fixture(autouse=True)
 def limpar_agenda():
@@ -49,14 +49,14 @@ def test_sem_conflito_barbeiros_diferentes():
 
 
 # ---------------------------------------------------------
-# TESTE 4: serviço maior (corte+barba, 2 gavetas) bloqueando
-# um agendamento que cairia na segunda gaveta dele
+# TESTE 4: corte+barba (2 blocos) bloqueia um agendamento
+# que cairia no segundo bloco dele
 # ---------------------------------------------------------
-def test_conflito_servico_que_ocupa_duas_gavetas():
-    # corte+barba as 09:00 ocupa as gavetas 09:00 e 09:30
+def test_conflito_servico_que_ocupa_dois_blocos():
+    # corte+barba às 09:00 ocupa os blocos 09:00 e 09:30
     agendar(barbeiro="joao", servico="corte+barba", horario_inicio="09:00")
 
-    # alguém tenta marcar um corte simples às 09:30 -> deveria recusar
+    # corte às 09:30 cai no segundo bloco -> deve recusar
     resultado = agendar(barbeiro="joao", servico="corte", horario_inicio="09:30")
 
     assert resultado["status"] == "recusado"

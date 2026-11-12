@@ -15,7 +15,7 @@ Infraestrutura como código (IaC) com Terraform, do ciclo local ao fluxo de equi
 
 ## State
 
-- O `terraform.tfstate` liga cada item do código ao recurso real (como a comanda de um restaurante). É gerado no primeiro `apply`.
+- O `terraform.tfstate` registra qual recurso real corresponde a cada bloco do código (IDs, atributos, dependências). É gerado no primeiro `apply`, e é com ele que o `plan` calcula o que criar, alterar ou destruir.
 - **Nunca** editar manualmente e **nunca** versionar no Git — pode conter segredos.
 - **Em produção:** o state fica num *remote backend* com lock (na Azure, Storage Account), para que duas pessoas não apliquem ao mesmo tempo.
 

@@ -1,15 +1,16 @@
-apiVersion: v1                  # versão da API (objetos básicos usam v1)
-kind: ConfigMap                 # tipo: configuração comum, não sensível
+# ConfigMap e Secret consumidos por vitrine.yaml (como variáveis) e vitrine-arq.yaml (como arquivos).
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: config-app              # nome do ConfigMap (o Deployment aponta por esse nome)
-data:                           # os pares nome: valor
-  DB_SERVER: "banco-novo"       # servidor do banco
-  DB_USER: "app_loja"           # usuário do banco
+  name: config-app
+data:
+  DB_SERVER: "banco-novo"
+  DB_USER: "app_loja"
 ---
 apiVersion: v1
-kind: Secret                    # tipo: dado sensível
+kind: Secret
 metadata:
-  name: segredo-app             # nome do Secret
-type: Opaque                    # tipo genérico de Secret
-stringData:                     # você escreve em texto puro, e o Kubernetes converte para base64 ao guardar
-  DB_PASSWORD: "senha-de-exemplo" # valor fictício de lab; em produção, usar cofre externo (Key Vault)
+  name: segredo-app
+type: Opaque
+stringData:                       # texto puro aqui; o Kubernetes grava em base64
+  DB_PASSWORD: "senha-de-exemplo" # valor fictício de lab; em produção viria de um cofre (Key Vault)

@@ -32,7 +32,6 @@ def test_criar_usuario_e_credencial():
     usuario = criar_usuario(nome="Diogo Dias", cargo="Analista")
     credencial = criar_credencial(usuario_id=usuario["id"], numero_cartao="111")
 
-    # assert = "afirma que isso é verdade". Se não for, o teste falha.
     assert usuario["nome"] == "Diogo Dias"
     assert credencial["usuario_id"] == usuario["id"]
     assert credencial["status"] == "ativa"
@@ -54,7 +53,7 @@ def test_acesso_liberado_dentro_do_horario():
     )
 
     assert resultado["status"] == "acesso_concedido"
-    # Confere também se o comando certo foi mandado pra controladora
+    # Confere também se o comando "destravar" chegou à controladora
     assert controladora_falsa.comando_enviado == "destravar"
 
 

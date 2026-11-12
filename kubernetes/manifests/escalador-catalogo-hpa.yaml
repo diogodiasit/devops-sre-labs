@@ -1,33 +1,25 @@
-# ============================================================
-# O GERENTE (HPA)
-# ============================================================
-apiVersion: autoscaling/v2           # versão atual do HPA (a v1 antiga só sabe medir CPU)
+# HPA do api-catalogo: mantém a CPU média dos Pods em 50% do request (100m de 200m),
+# entre 2 e 8 réplicas.
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: escalador-catalogo
 spec:
-  # QUEM o gerente vai controlar: os caixas do Deployment "api-catalogo"
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: api-catalogo
-
-  # MÍNIMO e MÁXIMO de caixas (pods)
-  minReplicas: 2                     # nunca menos que 2: se um cair, o outro segura
-  maxReplicas: 8                     # nunca mais que 8: protege o custo e o cluster
-
-  # COM BASE EM QUÊ ele decide: a META de esforço
+  minReplicas: 2                 # mínimo de 2 para não ficar com um único ponto de falha
+  maxReplicas: 8                 # teto para proteger o cluster e o custo
   metrics:
-    - type: Resource                 # métrica de recurso do container (CPU ou memória)
+    - type: Resource
       resource:
-        name: cpu                    # olhar a força (CPU)
+        name: cpu
         target:
-          type: Utilization          # medir em % da reserva (requests)
-          averageUtilization: 50     # meta: cada caixa trabalhando em média a 50%
-                                     # da reserva (aqui, 100m de 200m)
-
-  # COMO ele se comporta: a ESPERA antes de fechar caixas
+          type: Utilization
+          averageUtilization: 50
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: 300  # espera 5 min de calma antes de remover pods
-                                       # (300 já é o padrão; explícito para documentar o comportamento)
+      # 300 s já é o padrão; deixei explícito porque foi essa janela que observei
+      # no lab antes de o HPA voltar de 6 para 2 Pods.
+      stabilizationWindowSeconds: 300
